@@ -11,7 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\src\point_to_kml\converter\pos_kml_converter.cpp" />
     <ClCompile Include="..\..\..\src\point_to_kml\main\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\point_to_kml\converter\pos_kml_converter.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D86E41B1-03C9-4A67-A4DD-5142B6FAFE75}</ProjectGuid>
