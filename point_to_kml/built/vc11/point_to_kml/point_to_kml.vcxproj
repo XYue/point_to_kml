@@ -57,7 +57,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(GOOGLE_GFLAGS_LIB_GFLAGS);$(PROJ_LIB_PROJ);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(TINYXML2_LIB_TINYXML2);$(GOOGLE_GFLAGS_LIB_GFLAGS);$(PROJ_LIB_PROJ);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -73,7 +73,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(GOOGLE_GFLAGS_LIB_GFLAGS);$(PROJ_LIB_PROJ);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(TINYXML2_LIB_TINYXML2);$(GOOGLE_GFLAGS_LIB_GFLAGS);$(PROJ_LIB_PROJ);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

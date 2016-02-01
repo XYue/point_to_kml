@@ -36,14 +36,11 @@ namespace cvt
 			std::string proj_cmd = "");
 
 	protected:
-		int load_pos();
-
-		int test_utm_zone();
-
+		int load_pos(std::string proj_cmd = "");
+		
 	private:
 		std::string _in_file;
 
-		std::vector<POSPoint> _pos_points;
 		std::vector<POSPoint> _gps_points;
 	};
 }

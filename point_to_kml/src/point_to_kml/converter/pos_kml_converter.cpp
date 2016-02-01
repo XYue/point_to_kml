@@ -1,4 +1,4 @@
-#include "pos_kml_converter.hpp"
+#include "converter/pos_kml_converter.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -10,7 +10,6 @@
 
 #include <tinyxml2.h>
 #include <proj_api.h>
-#include <Eigen/LU>
 
 namespace cvt
 {
@@ -32,8 +31,7 @@ namespace cvt
 
 	}
 
-	int PosKmlConverter::Convert( const std::string & kml_file,
-		std::string proj_cmd = "")
+	int PosKmlConverter::load_pos( std::string proj_cmd /*= ""*/ )
 	{
 		int ret = -1;
 
@@ -42,9 +40,110 @@ namespace cvt
 
 		do 
 		{
-			if (_pos_points.empty())
+			std::ifstream file(_in_file);
+			if (!file.good()) break;
+			
+
+			// initial proj
+			if (!proj_cmd.empty())
 			{
-				if (load_pos())
+				longlat_proj = pj_init_plus("+proj=longlat +datum=WGS84 +ellps=WGS84");
+				src_proj = pj_init_plus(proj_cmd.c_str());
+				if(!longlat_proj || !src_proj)  
+				{
+					std::cout<<"Initial proj parameters failed."<<std::endl;
+					std::cout<<"proj_cmd: "<<proj_cmd<<std::endl;
+					break;
+				}
+			}
+			
+
+			std::vector<POSPoint> tmp_points;
+
+			std::string line;
+			std::stringstream sstr;
+			std::getline(file, line);
+			while (file.good())
+			{
+				POSPoint pt;
+
+				sstr.clear(); sstr.str("");
+				sstr << line;
+
+				sstr >> pt.name;
+
+				sstr >> pt.x;
+				sstr >> pt.y;
+				sstr >> pt.z;
+
+
+				// convert
+				if (longlat_proj && src_proj)
+				{
+					double x = pt.x;
+					double y = pt.y;
+					if(pj_transform(src_proj, longlat_proj, 1, 0, 
+						&x, &y, NULL))
+					{
+						std::cout<<"pj_transform failed at pos conversion. "
+							<<pt.x<<" "<<pt.y<<" "<<pt.z<<std::endl;
+						continue;
+					}
+					pt.x = x * RAD_TO_DEG;
+					pt.y = y * RAD_TO_DEG;
+				}
+
+
+				tmp_points.push_back(pt);
+
+				line.clear();
+				std::getline(file, line);
+			}
+
+
+			_gps_points.swap(tmp_points);
+
+			ret = 0;
+		} while (0);
+
+		if(src_proj)
+		{
+			pj_free(src_proj);
+			src_proj = NULL;
+		}
+		if(longlat_proj)
+		{
+			pj_free(longlat_proj);
+			longlat_proj = NULL;
+		}
+
+		return ret;
+	}
+
+	int PosKmlConverter::SetInputPath( const std::string & input_path )
+	{
+		int ret = -1;
+
+		do 
+		{
+			_in_file = input_path;
+
+			ret = 0;
+		} while (0);
+
+		return ret;
+	}
+
+	int PosKmlConverter::Convert( const std::string & kml_file, 
+		std::string proj_cmd /*= ""*/ )
+	{
+		int ret = -1;
+
+		do 
+		{
+			if (_gps_points.empty())
+			{
+				if (load_pos(proj_cmd))
 				{
 					std::cout<<"load_pos failed."<<std::endl;
 					break;
@@ -66,26 +165,6 @@ namespace cvt
 			if (!document_node) goto error0;
 			kml_node->InsertEndChild(document_node);
 
-
-			size_t num_photos = _gps_points.size();
-
-			if (output_proj)
-			{					
-				int utm_zone = test_utm_zone();
-				std::stringstream sstr_utm_zone;	
-				sstr_utm_zone << utm_zone;
-				std::string str_longlat_proj = "+proj=longlat +datum=WGS84 +ellps=WGS84";
-				std::string str_utm_proj = "+proj=utm +datum=WGS84 +ellps=WGS84 +zone=" + sstr_utm_zone.str();
-				longlat_proj = pj_init_plus(str_longlat_proj.c_str());
-				src_proj = pj_init_plus(str_utm_proj.c_str());
-				if(!longlat_proj || !src_proj)  
-				{
-					std::cout<<"Initial proj parameters failed."<<std::endl;
-					goto error0;
-				}
-			}
-
-
 			tinyxml2::XMLElement * xml_folder = doc.NewElement("Folder");
 			if (!xml_folder) goto error0;
 			document_node->InsertEndChild(xml_folder);
@@ -95,9 +174,10 @@ namespace cvt
 			folder_name_node->InsertEndChild(doc.NewText("CameraPos"));
 			xml_folder->InsertEndChild(folder_name_node);				
 
-			for (size_t i_p = 0; i_p < num_photos; ++i_p)
+			size_t num_pts = _gps_points.size();
+			for (size_t i_p = 0; i_p < num_pts; ++i_p)
 			{
-				const POSPoint & gps_pt = _pos_points[i_p];
+				const POSPoint & gps_pt = _gps_points[i_p];
 
 				tinyxml2::XMLElement * placemark_node = doc.NewElement("Placemark");
 				if (!placemark_node) goto error0;
@@ -105,7 +185,7 @@ namespace cvt
 
 				tinyxml2::XMLElement * name_node = doc.NewElement("name");
 				if (!name_node) goto error0;
-				name_node->InsertEndChild(doc.NewText(gps_pt.filename.c_str()));
+				name_node->InsertEndChild(doc.NewText(gps_pt.name.c_str()));
 				placemark_node->InsertEndChild(name_node);
 
 				tinyxml2::XMLElement * xml_multi_geometry = doc.NewElement("MultiGeometry");
@@ -126,7 +206,7 @@ namespace cvt
 				point_node->InsertEndChild(coordinates_node);
 
 				std::stringstream sstr;
-				sstr<< std::setprecision(15)<< gps_pt.y<<", "<<gps_pt.x<<", "<<gps_pt.z;
+				sstr<< std::setprecision(15)<< gps_pt.x<<", "<<gps_pt.y<<", "<<gps_pt.z;
 				coordinates_node->InsertEndChild(doc.NewText(sstr.str().c_str()));
 			}
 
@@ -141,93 +221,7 @@ namespace cvt
 		} while (0);
 error0:
 
-		if(src_proj)
-		{
-			pj_free(src_proj);
-			src_proj = NULL;
-		}
-		if(longlat_proj)
-		{
-			pj_free(longlat_proj);
-			longlat_proj = NULL;
-		}
-
 		return ret;
-	}
-
-	int PosKmlConverter::load_pos()
-	{
-		int ret = -1;
-
-		do 
-		{
-			std::ifstream file(_in_file);
-			if (!file.good()) break;
-
-
-			std::vector<POSPoint> tmp_points;
-
-
-			std::string line;
-			std::stringstream sstr;
-			std::getline(file, line);
-			while (file.good())
-			{
-				POSPoint pt;
-
-				sstr.clear(); sstr.str("");
-				sstr << line;
-
-				sstr >> pt.name;
-
-				sstr >> pt.x;
-				sstr >> pt.y;
-				sstr >> pt.z;
-
-				line.clear();
-				std::getline(file, line);
-			}
-
-
-			_pos_points.swap(tmp_points);
-
-			ret = 0;
-		} while (0);
-
-		return ret;
-	}
-
-	int PosKmlConverter::SetInputPath( const std::string & input_path )
-	{
-		int ret = -1;
-
-		do 
-		{
-			_in_file = input_path;
-
-			ret = 0;
-		} while (0);
-
-		return ret;
-	}
-
-	int PosKmlConverter::test_utm_zone()
-	{
-		double west = std::numeric_limits<double>::max();
-		size_t num_pts = _gps_points.size();
-		for (int i_c = 0; i_c < num_pts; ++i_c)
-			west = std::min(west,
-			_gps_points[i_c].y > std::numeric_limits<double>::epsilon() ?
-			_gps_points[i_c].y : west);
-
-		int utm_zone = static_cast<int>(west / 6.) + 31;
-		if (utm_zone <0 || utm_zone > 60) 
-		{
-			std::cout<<"Invalid UTM zone: "<<utm_zone<<std::endl;
-			return -1;
-		}
-
-		return utm_zone;
 	}
 
 }
