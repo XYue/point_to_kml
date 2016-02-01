@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "point_to_kml", "point_to_kml\point_to_kml.vcxproj", "{D86E41B1-03C9-4A67-A4DD-5142B6FAFE75}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D86E41B1-03C9-4A67-A4DD-5142B6FAFE75}.Debug|x64.ActiveCfg = Debug|x64
+		{D86E41B1-03C9-4A67-A4DD-5142B6FAFE75}.Debug|x64.Build.0 = Debug|x64
+		{D86E41B1-03C9-4A67-A4DD-5142B6FAFE75}.Release|x64.ActiveCfg = Release|x64
+		{D86E41B1-03C9-4A67-A4DD-5142B6FAFE75}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
