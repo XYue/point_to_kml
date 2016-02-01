@@ -2,6 +2,8 @@
 
 #include <gflags/gflags.h>
 
+#include "converter/pos_kml_converter.hpp"
+
 DEFINE_string(i,     "",       "* point file, format: name x y");
 DEFINE_string(o,     "",       "* output kml file");
 DEFINE_string(proj_cmd,     "",       "* coordinate system convert command; proj4");
