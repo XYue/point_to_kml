@@ -2,7 +2,9 @@
 
 #include <gflags/gflags.h>
 
-DEFINE_string(i,     "",       "* point file, format: name x y");
+#include "converter/pos_kml_converter.hpp"
+
+DEFINE_string(i,     "",       "* point file, format: name x y z | format: name longitude latitude altitude)");
 DEFINE_string(o,     "",       "* output kml file");
 DEFINE_string(proj_cmd,     "",       "* coordinate system convert command; proj4");
 
@@ -23,12 +25,14 @@ void main(int argc, char ** argv)
 		if (FLAGS_i.empty())
 		{
 			std::cout<<"error: invalid input"<<std::endl;
+			std::cout<<FLAGS_i<<std::endl;
 			break;
 		}
 
 		if (FLAGS_o.empty())
 		{
 			std::cout<<"error: invalid output"<<std::endl;
+			std::cout<<FLAGS_o<<std::endl;
 			break;
 		}
 
@@ -36,14 +40,11 @@ void main(int argc, char ** argv)
 			<<"output: "<<FLAGS_o<<std::endl
 			<<"proj_cmd: "<<FLAGS_proj_cmd<<std::endl;
 
-// 		cvt::PosKmlConverter cvt;
-// 		cvt.SetInputPath(FLAGS_input_path);
-// 		if (cvt.Convert(FLAGS_kml_file, option,
-// 			FLAGS_img_width, FLAGS_img_height, focal_in_pixel,
-// 			FLAGS_ground_elev))
-// 		{
-// 			std::cout<<"Convert failed."<<std::endl;
-// 		}
+		cvt::PosKmlConverter cvt(FLAGS_i);
+		if (cvt.Convert(FLAGS_o, FLAGS_proj_cmd))
+		{
+			std::cout<<"Convert failed."<<std::endl;
+		}
 	} while (0);
 
 	std::cout<<"photo filtering."<<std::endl;
